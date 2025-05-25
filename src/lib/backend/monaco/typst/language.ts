@@ -5,14 +5,18 @@ import type { TypstCoreError } from "wolframe-typst-core";
 import { debug } from "../../utils";
 import monacoController from "..";
 import { TypstCompletionProvider } from "./provider/completionProvider";
+import { getVirtualFileSystem } from "../../stores/vfs.svelte";
+import { Path } from "../../path";
 
 export class TypstLanguage implements IMonacoLanguage {
 	private disposables: Monaco.IDisposable[] = [];
 	private monaco?: typeof Monaco;
 	private completionProvider: TypstCompletionProvider;
+	private vfs;
 
 	constructor() {
 		this.completionProvider = new TypstCompletionProvider();
+		this.vfs = getVirtualFileSystem();
 	}
 
 	init(monaco: typeof Monaco) {
@@ -90,7 +94,7 @@ export class TypstLanguage implements IMonacoLanguage {
 				this.monaco.editor.setModelMarkers(model, 'compiler', []);
 			}
 			for (const error of tError.CompileError) {
-				eventController.fire("command/file:retrieve", error.range.path, (fileNode) => {
+				const fileNodeResult = this.vfs.getFileByPath(new Path(error.range.path)).map(fileNode => {
 					const model = monacoController.getModel(fileNode.file.id, fileNode.extension!);
 
 					if (!model) {
@@ -111,7 +115,7 @@ export class TypstLanguage implements IMonacoLanguage {
 
 					const prevMarkers = this.monaco!.editor.getModelMarkers({ resource: model.uri, owner: 'compiler' });
 					this.monaco!.editor.setModelMarkers(model, 'compiler', [...prevMarkers, marker]);
-				});
+				})
 			}
 		} else {
 			debug("warning", "typst/language", "Unknown error type", tError);

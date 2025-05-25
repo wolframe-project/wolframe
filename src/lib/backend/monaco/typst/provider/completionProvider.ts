@@ -1,6 +1,7 @@
 import eventController from "@/lib/backend/events";
 import type { Monaco } from "../..";
 import { getIdFromUri } from "@/lib/backend/utils";
+import { getVirtualFileSystem } from "@/lib/backend/stores/vfs.svelte";
 
 interface ITypstCompletionItem {
     kind: 'type' | 'func' | 'constant' | 'syntax' | 'param' | 'path' | 'package' | 'label' | 'font' | {'symbol': string};
@@ -55,7 +56,10 @@ const typstToMonacoCompletion = (items: ITypstCompletionItem[], range: Monaco.IR
 }
 
 export class TypstCompletionProvider implements Monaco.languages.CompletionItemProvider {
-    constructor() {}
+    private vfs = getVirtualFileSystem();
+    constructor() {
+        
+    }
 
     provideCompletionItems(model: Monaco.editor.ITextModel, position: Monaco.Position, context: Monaco.languages.CompletionContext, token: Monaco.CancellationToken): Monaco.languages.ProviderResult<Monaco.languages.CompletionList> {
         const word = model.getWordUntilPosition(position);
@@ -67,7 +71,8 @@ export class TypstCompletionProvider implements Monaco.languages.CompletionItemP
         };
 
         return new Promise((resolve) => {
-            eventController.fire("command/file:retrieve", getIdFromUri(model.uri), (fileNode) => {
+            const fileId = getIdFromUri(model.uri);
+            this.vfs.getFileById(fileId).map(fileNode => {
                 eventController.fire("command/compiler:autocomplete", fileNode.path.rooted(), range, (result) => {
                     console.log("Autocomplete result", result);
 

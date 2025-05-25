@@ -25,7 +25,7 @@ type AppEvents = {
 
 
     "command/file:open": [string | null, ((fileNode: TreeNode) => void)] | [string | null], // Fired when a file is requested to be opened with the file path
-    "command/file:retrieve": [string | null, ((fileNode: TreeNode) => void)], // Fired when a file is requested to be retrieved with the file path
+    //"command/file:retrieve": [string | null, ((fileNode: TreeNode) => void)], // Fired when a file is requested to be retrieved with the file path
     
     "command/ui/console:visibility": [boolean], // Fired when the console visibility should be changed
     

@@ -34,7 +34,7 @@ class VirtualFileSystem {
 
         let disp = eventController.register("command/file:open", this.handleOpenFileEvent.bind(this));
         this.disposables.push(disp);
-        disp = eventController.register("command/file:retrieve", this.handleRetrieveFileEvent.bind(this));
+        //disp = eventController.register("command/file:retrieve", this.handleRetrieveFileEvent.bind(this));
         this.disposables.push(disp);
         
     }
