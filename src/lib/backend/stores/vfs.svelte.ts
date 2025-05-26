@@ -317,6 +317,7 @@ class VirtualFileSystem {
         parentNode.removeChild(fileNode); // remove from the current parent
 
         fileNode.parent = newParentNode; // set the new parent
+        fileNode.file.parentId = newParentNode.file.id; // update the parentId in the file object
         fileNode.file.updatedAt = Date.now(); // update the updatedAt timestamp
 
         if (this.useBackend) {

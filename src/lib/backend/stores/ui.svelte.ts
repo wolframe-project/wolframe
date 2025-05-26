@@ -8,6 +8,7 @@ class UiStore {
     showPreview: () => void = $state(() => {});
     isDebugPanelMinimized: boolean = $state(true);
     setDebugPanelSize: (percentage: number) => void = $state(() => {});
+    fileExplorerSide: 'left' | 'right' = $state('left');
 
     constructor() {}
 }

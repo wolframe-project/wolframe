@@ -6,12 +6,14 @@
 	import type { TreeNode } from "@/lib/backend/stores/vfs/TreeNode.svelte";
 	import { Check } from "lucide-svelte";
 	import { getEditorManager } from "@/lib/backend/stores/editor.svelte";
+	import { getUiStore } from "@/lib/backend/stores/ui.svelte";
 
     const ctxMenuStore = getContextMenuStore();
 
     const vfs = getVirtualFileSystem();
     const hoverQueue = getHoverQueue<TreeNode>();
 	const editorManager = getEditorManager();
+	const uiStore = getUiStore();
     
     function addNewFile(parent: TreeNode, folder: boolean = false) {
 		const result = vfs.addFile('', folder ? null : '', parent.file.id, true);
@@ -53,7 +55,7 @@
 {#snippet menuentry(ticked: boolean, label: string, action: () => void)}
 	<li class={["mx-1 first:mt-2 last:mb-2"]}>
 		<button
-			class={["flex items-center gap-2 py-1.5", ticked ? '' : 'pl-6']}
+			class={["flex items-center gap-2 py-1.5 px-2", ticked ? '' : 'pl-8']}
 			onclick={action}
 		>
 			{#if ticked}
@@ -62,6 +64,10 @@
 			{label}
 		</button>
 	</li>
+{/snippet}
+
+{#snippet divider()}
+	<div class="divider m-0 before:h-[1px] after:h-[1px] h-2"></div>
 {/snippet}
 
 {#if ctxMenuStore.show}
@@ -78,10 +84,14 @@
 			{@render menuentry(false, "New Folder", () => addNewFile(item!, true))}
 		{/if}
 		{#if item && item.file.id !== 'root'}
-			<div class="divider m-0 before:h-[1px] after:h-[1px]"></div>
+			{@render divider()}
 			{@render menuentry(false, `Delete ${item?.isFile ? 'File' : 'Folder'}`, () => vfs.removeFile(item!.file.id))}
-			<div class="divider m-0 before:h-[1px] after:h-[1px]"></div>
+			{@render divider()}
 			{@render menuentry(false, `Rename ${item?.isFile ? 'File' : 'Folder'}`, () => renameNode(item!))}
 		{/if}
+		{@render divider()}
+		{@render menuentry(false, `Move FileExplorer to the ${uiStore.fileExplorerSide === 'left' ? 'right' : 'left'}`, () => {
+			uiStore.fileExplorerSide = uiStore.fileExplorerSide === 'left' ? 'right' : 'left';
+		})}
 	</ul>
 {/if}

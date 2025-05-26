@@ -14,7 +14,7 @@
 	import { getEditorManager } from '@/lib/backend/stores/editor.svelte';
 
 	let {
-		entry
+		entry = $bindable()
 	}: {
 		entry: TreeNode;
 	} = $props();

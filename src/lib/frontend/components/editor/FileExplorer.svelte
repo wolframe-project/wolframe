@@ -87,6 +87,6 @@
     ]}
 >
     {#each vfs.getTree().getChildren() as child (child.file.id)}
-        <Entry entry={child} />
+        <Entry bind:entry={child} />
     {/each}
 </ul>

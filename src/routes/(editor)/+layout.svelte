@@ -213,62 +213,70 @@
 	<p>{e}</p>
 {/await}
 
+{#snippet file_explorer()}
+	<div class="bg-base-200 flex flex-col">
+		<FileExplorer />
+	</div>
+{/snippet}
+
+{#snippet editor()}
+	<MonacoEditor />
+{/snippet}
+
+{#snippet preview()}
+	<div bind:this={previewPanel} class="bg-base-300 flex flex-col">
+		<PreviewPanel />
+	</div>
+{/snippet}
+
+{#snippet console_pane()}
+	<div class="bg-base-200">
+		<DebugPanel />
+	</div>
+{/snippet}
+
+{#snippet editor_view()}
+	<div class="grid pl-[1px]" style="grid-template-rows: auto minmax(0, 1fr);">
+		<Menu />
+		<CustomSplitpanes
+			direction="vertical"
+			max="-20px"
+			min="10%"
+			maxThreshold={80}
+			maxReleaseThreshold={88}
+			class="hover:after:bg-primary!"
+			bind:maximized={uiStore.isDebugPanelMinimized}
+			bind:this={debugPanelSplitter}
+			b={console_pane}
+		>
+			{#snippet a()}
+				<div class="">
+					<CustomSplitpanes
+						direction="horizontal"
+						pos="50%"
+						min="20%"
+						max="80%"
+						class="hover:after:bg-primary!"
+						bind:this={editorPanelSplitter}
+						a={editor}
+						b={preview}
+					/>
+				</div>
+			{/snippet}
+		</CustomSplitpanes>
+	</div>
+{/snippet}
+
 <div class="h-screen w-screen">
 	<CustomSplitpanes
 		direction="horizontal"
-		pos="15%"
-		min="220px"
-		max="60%"
+		pos={uiStore.fileExplorerSide === "left" ? "15%" : "85%"}
+		min={uiStore.fileExplorerSide === "left" ? "220px" : "60%"}
+		max={uiStore.fileExplorerSide === "left" ? "60%" : "-220px"}
 		class="hover:after:bg-primary!"
-	>
-		{#snippet a()}
-			<div class="bg-base-200 flex flex-col">
-				<FileExplorer />
-			</div>
-		{/snippet}
-		{#snippet b()}
-			<div class="grid pl-[1px]" style="grid-template-rows: auto minmax(0, 1fr);">
-				<Menu />
-				<CustomSplitpanes
-					direction="vertical"
-					max="-20px"
-					min="10%"
-					maxThreshold={80}
-					maxReleaseThreshold={88}
-					class="hover:after:bg-primary!"
-					bind:maximized={uiStore.isDebugPanelMinimized}
-					bind:this={debugPanelSplitter}
-				>
-					{#snippet a()}
-						<div class="">
-							<CustomSplitpanes
-								direction="horizontal"
-								pos="50%"
-								min="20%"
-								max="80%"
-								class="hover:after:bg-primary!"
-								bind:this={editorPanelSplitter}
-							>
-								{#snippet a()}
-									<MonacoEditor />
-								{/snippet}
-								{#snippet b()}
-									<div bind:this={previewPanel} class="bg-base-300 flex flex-col">
-										<PreviewPanel />
-									</div>
-								{/snippet}
-							</CustomSplitpanes>
-						</div>
-					{/snippet}
-					{#snippet b()}
-						<div class="bg-base-200">
-							<DebugPanel />
-						</div>
-					{/snippet}
-				</CustomSplitpanes>
-			</div>
-		{/snippet}
-	</CustomSplitpanes>
+		a={uiStore.fileExplorerSide === "left" ? file_explorer : editor_view}
+		b={uiStore.fileExplorerSide === "right" ? file_explorer : editor_view}
+	/>
 </div>
 
 {@render children()}

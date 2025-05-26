@@ -67,7 +67,7 @@
         'markup.underline.typst',
     ]
 
-    let indexedGrammarScopes: string[] = [];
+    let indexedGrammarScopes: string[] = $state([]);
 
 	const DB_NAME = 'themeEditorDB';
 	const STORE_NAME = 'themes';
@@ -191,6 +191,9 @@
             const rule = grammar.repository[key];
             indexedGrammarScopes.push(...getScopesFromPattern(rule));
         }
+		// deduplicate scopes
+		indexedGrammarScopes = [...new Set(indexedGrammarScopes)];
+		indexedGrammarScopes.sort((a, b) => a.localeCompare(b));
     }
 
 	async function loadGrammar() {
