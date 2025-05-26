@@ -29,7 +29,46 @@ export interface File extends FileMetadata {
 }
 
 export interface IBackendFileSystem {
+  /**
+   * Creates a file with the specified metadata.
+   * @param file - The file metadata to create.
+   * @returns The created file.
+   */
+  createFile(file: File): Promise<File>;
 
+  /**
+   * Deletes a file by its ID.
+   * @param id - The ID of the file to delete.
+   */
+  deleteFile(id: string): Promise<void>;
+
+  /**
+   * Updates a file with the specified metadata.
+   * @param file - The file metadata to update.
+   * @returns The updated file.
+   */
+  updateFile(file: File): Promise<File>;
+
+  /**
+   * Updates the content of a file by its ID.
+   * @param id - The ID of the file to update.
+   * @param content - The new content of the file.
+   * @returns The updated file.
+   */
+  updateFileContent(id: string, content: string): Promise<File>;
+
+  /**
+   * Retrieves a file by its ID.
+   * @param id - The ID of the file to retrieve.
+   * @returns The retrieved file.
+   */
+  getFile(id: string): Promise<File | null>;
+
+  /**
+   * Lists all files in the system.
+   * @returns An array of all files.
+   */
+  listFiles(): Promise<File[]>;
 }
 
 interface IMonacoExtension {

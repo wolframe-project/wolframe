@@ -24,20 +24,22 @@
 	import CustomSplitpanes from '@/lib/frontend/components/splitpane/Splitpane.svelte';
 	import { setDebugStore } from '@/lib/backend/stores/debug.svelte';
 	import { debug } from '@/lib/backend/utils';
+	import { IndexedDBVFS } from '@/lib/backend/backend-vfs/IndexedDBVFS';
 
 	let { children } = $props();
 
 	const editorManager = setEditorManager();
-	setVirtualFileSystem();
-	const vfs = getVirtualFileSystem();
+	const backendVFS = new IndexedDBVFS('playground');
+	const vfs = setVirtualFileSystem(backendVFS);
 	const uiStore = setUiStore();
 	const debugStore = setDebugStore();
 	const awaitLoad = editorManager.loadEditor; // https://github.com/sveltejs/svelte/discussions/14692
 	let showConsole = $state(6);
 	let outputMinimized = $state(false);
-	let debugPanelSplitter: CustomSplitpanes|undefined = $state();
-	let editorPanelSplitter: CustomSplitpanes|undefined = $state();
+	let debugPanelSplitter: CustomSplitpanes | undefined = $state();
+	let editorPanelSplitter: CustomSplitpanes | undefined = $state();
 	let previewPanel;
+	let disposables: Monaco.IDisposable[] = [];
 
 	function handleTypstError(err: TypstCoreError) {
 		console.error('Typst error:', err);
@@ -62,8 +64,6 @@
 	) {
 		if (node.isFile) {
 			const path = node.path.rooted();
-			let txt = await editorManager.compiler.getFileText(path);
-			debug('info', 'compiler', 'File content before change:', txt);
 
 			function unicodeLength(str: string): number {
 				let length = 0;
@@ -78,23 +78,18 @@
 
 			event.changes.sort((a, b) => b.rangeOffset - a.rangeOffset);
 			for (const change of event.changes) {
-
 				const { text, rangeOffset, rangeLength } = change;
 				/* const initialLength = unicodeLength(content.slice(0, rangeOffset));
 				const deletedLength = unicodeLength(content.slice(rangeOffset, rangeOffset + rangeLength)); */
 
 				// const restLength = contentLength - initialLength - deletedLength;
 
-				await editorManager.compiler.edit(
-					path,
-					change,
-					Comlink.proxy(handleTypstError)
-				);
+				await editorManager.compiler.edit(path, change, Comlink.proxy(handleTypstError));
 			}
 
+			vfs.editFile(node.file.id);
+
 			editorManager.compile();
-			txt = await editorManager.compiler.getFileText(path);	
-			debug('info', 'compiler', 'File content after change:', txt);
 		}
 	}
 
@@ -134,22 +129,24 @@
 	$effect(() => {
 		uiStore.setDebugPanelSize = (size: number) => {
 			debugPanelSplitter!.setSize(size);
-		}
+		};
 
 		uiStore.hidePreview = () => {
 			editorPanelSplitter!.hide(1);
 			previewPanel!.style.display = 'none';
-		}
+		};
 
 		uiStore.showPreview = () => {
 			editorPanelSplitter!.show(1);
 			previewPanel!.style.display = 'flex';
-		}
+		};
 
-		eventController.register('command/ui/console:visibility', consoleVisibility);
-		eventController.register('compiler/compile:error', addCompileError);
-		eventController.register('renderer:render', clearCompileError);
-
+		disposables.push(
+			eventController.register('monaco:loaded', () => vfs.loadFromBackend()),
+			eventController.register('command/ui/console:visibility', consoleVisibility),
+			eventController.register('compiler/compile:error', addCompileError),
+			eventController.register('renderer:render', clearCompileError)
+		);
 		const Compiler = Comlink.wrap<CompilerType>(new CompilerWorker());
 
 		(async () => {
@@ -167,7 +164,9 @@
 
 					// Probe for available entry points
 					// first check for /main.typ then /lib.typ else the first .typ file
-					const entryPoints = vfs.getFiles().filter((f) => f.isFile && f.file.name.endsWith('.typ'));
+					const entryPoints = vfs
+						.getFiles()
+						.filter((f) => f.isFile && f.file.name.endsWith('.typ'));
 					const mainFile = entryPoints.find((f) => f.file.name === 'main.typ' && !f.file.parentId);
 					const libFile = entryPoints.find((f) => f.file.name === 'lib.typ' && !f.file.parentId);
 					const entryPoint = mainFile || libFile || entryPoints[0];
@@ -179,28 +178,25 @@
 					// open entry point
 					if (entryPoint) entryPoint.openFile();
 
-					eventController.register('file:created', addFile);
-					eventController.register('file:deleted', deleteFile);
+					disposables.push(
+						eventController.register('file:created', addFile),
+						eventController.register('file:deleted', deleteFile)
+					);
 
 					editorManager.setCompiler(Compiler);
 
 					await rootChanged(editorManager.previewFilePath);
+					disposables.push(
+						eventController.register('file:preview', rootChanged),
 
-					eventController.register('file:preview', rootChanged);
-
-					eventController.register('file:edited', fileContentChanged);
+						eventController.register('file:edited', fileContentChanged)
+					);
 				})
 			);
 		})();
 
 		return () => {
-			eventController.unregister('file:preview', rootChanged);
-			eventController.unregister('file:edited', fileContentChanged);
-			eventController.unregister('file:created', addFile);
-			eventController.unregister('file:deleted', deleteFile);
-			eventController.unregister('command/ui/console:visibility', consoleVisibility);
-			eventController.unregister('compiler/compile:error', addCompileError);
-			eventController.unregister('renderer:render', clearCompileError);
+			disposables.forEach((d) => d.dispose());
 			editorManager.dispose();
 		};
 	});
@@ -254,7 +250,7 @@
 								bind:this={editorPanelSplitter}
 							>
 								{#snippet a()}
-										<MonacoEditor />
+									<MonacoEditor />
 								{/snippet}
 								{#snippet b()}
 									<div bind:this={previewPanel} class="bg-base-300 flex flex-col">

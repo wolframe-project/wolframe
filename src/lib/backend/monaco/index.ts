@@ -176,9 +176,14 @@ class MonacoController {
      * @param {string | undefined} language - The language of the model. If undefined, the language will be interpreted from the extension.
      * @returns {Monaco.editor.ITextModel} - The created model.
      */
-    createModel(id: string, extension: string, content: string, language: string | undefined) {
+    createModel(id: string, extension: string, content: string, language: string | undefined, useDuplicateModel: boolean = false) {
         if (!this.monaco) {
             throw new Error("Monaco is not loaded yet.");
+        }
+
+        const prevModel = this.getModel(id, extension);
+        if (prevModel && useDuplicateModel) {
+            return prevModel;
         }
 
         const uri = this.createURI(id, extension);

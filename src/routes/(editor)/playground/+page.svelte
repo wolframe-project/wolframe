@@ -11,7 +11,7 @@
 
     function onMonacoLoaded() {
         debug('info', 'vfs', "Monaco loaded, adding files");
-        vfs.addFile("template.typ", `#let month_names = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
+        /* vfs.addFile("template.typ", `#let month_names = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December")
 
 #let date = {
   let date = datetime.today()
@@ -125,7 +125,7 @@
 #let strong-enums(offset: 0, ..body) = enum(numbering: (it) => strong(numbering("a)", it + offset)),..body)`);
         vfs.addFile("main.typ", "Hello *_Typst_*!");
 
-        eventController.fire("files:loaded");
+        eventController.fire("files:loaded"); */
     }
 
     function onEditorCreated() {

@@ -28,15 +28,24 @@ class VirtualFileSystem {
         this.backend = backend;
         this.useBackend = backend !== null;
 
-        if (this.useBackend) {
-            // this.loadFilesFromBackend();
-        }
+        debug("info", "vfs", "VirtualFileSystem initialized with backend:", this.useBackend);
 
         let disp = eventController.register("command/file:open", this.handleOpenFileEvent.bind(this));
         this.disposables.push(disp);
         //disp = eventController.register("command/file:retrieve", this.handleRetrieveFileEvent.bind(this));
         this.disposables.push(disp);
         
+    }
+
+    async loadFromBackend(): Promise<void> {
+        if (this.useBackend) {
+            const backendFiles = await this.backend!.listFiles();
+                let treeNodes = backendFiles.toSorted((fileA, fileB) => fileA.createdAt - fileB.createdAt).map(file => this.createFile(file, false,true));
+                if (treeNodes.some(node => node.ok === false)) {
+                    debug("error", "vfs", "Error loading files from backend:", treeNodes.filter(node => node.ok === false).map(node => node.error));
+                }
+                eventController.fire("files:loaded");
+        }
     }
 
     /**
@@ -70,29 +79,12 @@ class VirtualFileSystem {
         return Result.ok(currentNode);
     }
 
-    /**
-     * Adds a file to the file system.
-     * @param name The name of the file to add.
-     * @param content The content of the file to add, null if it is a folder.
-     * @param parentId The id of the parent folder to add the file to. If not specified, it will be added to the root folder.
-     * @param isInput Whether the file is an input file (for a new file) or not. Defaults to false.
-     * @returns A result with the added file or an error if the file was not added.
-     */
-    addFile(name: string, content: string | null, parentId?: string, isInput: boolean = false): Result<TreeNode> {
-        const file: File = {
-            id: crypto.randomUUID(),
-            name,
-            type: content !== null ? FileType.File : FileType.Folder,
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            content: content ?? undefined,
-            parentId: parentId,
-        };
+    private createFile(file: File, isInput: boolean = false, useDuplicateModel: boolean = false): Result<TreeNode> {
         let treeNode: TreeNode;
         let result: Result<void, Error>;
 
-        if (parentId && parentId !== "root") {
-            const parentNodeResult = this.getFileById(parentId);
+        if (file.parentId && file.parentId !== "root") {
+            const parentNodeResult = this.getFileById(file.parentId);
             if (!parentNodeResult.ok) {
                 return Result.err(parentNodeResult.error);
             }
@@ -117,7 +109,7 @@ class VirtualFileSystem {
             }
         }
 
-        const model = monacoController.createModel(file.id, treeNode.extension!, content ?? "", undefined);
+        const model = monacoController.createModel(file.id, treeNode.extension!, file.content ?? "", undefined, useDuplicateModel);
         treeNode.setModel(model); // set the model for the file
 
         // Add file change listener
@@ -129,6 +121,36 @@ class VirtualFileSystem {
         this.files.set(file.id, treeNode);
         eventController.fire("file:created", treeNode); // fire the file created event
         return Result.ok(treeNode);
+    }
+
+    /**
+     * Adds a file to the file system.
+     * @param name The name of the file to add.
+     * @param content The content of the file to add, null if it is a folder.
+     * @param parentId The id of the parent folder to add the file to. If not specified, it will be added to the root folder.
+     * @param isInput Whether the file is an input file (for a new file) or not. Defaults to false.
+     * @returns A result with the added file or an error if the file was not added.
+     */
+    addFile(name: string, content: string | null, parentId?: string, isInput: boolean = false): Result<TreeNode> {
+        const file: File = {
+            id: crypto.randomUUID(),
+            name,
+            type: content !== null ? FileType.File : FileType.Folder,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            content: content ?? undefined,
+            parentId: parentId,
+        };
+
+        const treeNode = this.createFile(file, isInput);
+        
+        if (this.useBackend && treeNode.ok) {
+            this.backend!.createFile(file).catch((error) => {
+                console.error("Error creating file in backend:", error);
+                // Optionally, handle the error (e.g., rollback the local changes)
+            });
+        }
+        return treeNode;
     }
 
     /**
@@ -153,7 +175,39 @@ class VirtualFileSystem {
         fileNode.model?.dispose();
         fileNode.delete();
         this.files.delete(id);
+        if (this.useBackend) {
+            this.backend!.deleteFile(id).catch((error) => {
+                console.error("Error deleting file in backend:", error);
+                // Optionally, handle the error (e.g., rollback the local changes)
+            });
+        }
         eventController.fire("file:deleted", fileNode); // fire the file deleted event
+        return Result.ok(fileNode);
+    }
+
+    editFile(id: string): Result<TreeNode> {
+        const fileResult = this.getFileById(id);
+        if (!fileResult.ok) {
+            return Result.err(fileResult.error);
+        }
+        const fileNode = fileResult.unwrap();
+        if (fileNode.isRoot) {
+            return Result.err(new Error("Cannot edit root node"));
+        }
+        if (!fileNode.isFile) {
+            return Result.err(new Error("Cannot edit a folder"));
+        }
+        if (!fileNode.model) {
+            return Result.err(new Error("File model is not available"));
+        }
+        fileNode.file.content = fileNode.model.getValue(); // update the content of the file
+        fileNode.file.updatedAt = Date.now(); // update the updatedAt timestamp
+        if (this.useBackend) {
+            this.backend!.updateFile(fileNode.file).catch((error) => {
+                console.error("Error updating file in backend:", error);
+                // Optionally, handle the error (e.g., rollback the local changes)
+            });
+        }
         return Result.ok(fileNode);
     }
 
@@ -185,6 +239,10 @@ class VirtualFileSystem {
                 return Result.ok(error.cause);
             }
             return Result.err(error);
+        }
+
+        if (this.useBackend) {
+            this.backend!.updateFile(fileNode.file);
         }
 
         return Result.ok(fileNode);
@@ -260,6 +318,14 @@ class VirtualFileSystem {
 
         fileNode.parent = newParentNode; // set the new parent
         fileNode.file.updatedAt = Date.now(); // update the updatedAt timestamp
+
+        if (this.useBackend) {
+            this.backend!.updateFile(fileNode.file).catch((error) => {
+                console.error("Error moving file in backend:", error);
+                // Optionally, handle the error (e.g., rollback the local changes)
+            });
+        }
+
         return Result.ok(fileNode);
     }
 
@@ -328,6 +394,6 @@ export function getVirtualFileSystem(): VirtualFileSystem {
     return getContext<ReturnType<typeof setVirtualFileSystem>>(symbol);
 }
 
-export function setVirtualFileSystem() {
-    return setContext(symbol, new VirtualFileSystem());
+export function setVirtualFileSystem(backend: IBackendFileSystem | null = null): VirtualFileSystem {
+    return setContext(symbol, new VirtualFileSystem(backend));
 }
