@@ -73,8 +73,8 @@
 {#if ctxMenuStore.show}
 	{@const item = hoverQueue.item}
 	<ul
-		class="bg-base-300 rounded-box menu menu-sm absolute z-10 w-full max-w-60 p-0 shadow-lg"
-		style="top: {ctxMenuStore.position.y}px; left: {ctxMenuStore.position.x}px;"
+		class="bg-base-300 rounded-box menu menu-sm absolute z-10 w-full max-w-68 p-0 shadow-lg"
+		style="top: {ctxMenuStore.position.y}px; left: {ctxMenuStore.position.x - (uiStore.fileExplorerSide === 'left' ? 0 : 272)}px;"
 		use:portalAction={{}}
 	>
 		{#if item?.isFile}

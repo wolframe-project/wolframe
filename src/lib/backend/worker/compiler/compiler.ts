@@ -1,4 +1,4 @@
-import init, { TypstCore, type TypstCoreError, type OutputFormat, type Output, MonacoRange } from 'wolframe-typst-core';
+import init, { TypstCore, type TypstCoreError, type OutputFormat, type Output, MonacoRange, type TypstCoreDefinition } from 'wolframe-typst-core';
 import { Result } from '../../functionals';
 import * as Comlink from 'comlink';
 import type { Monaco } from '../../monaco';
@@ -75,6 +75,14 @@ export const Compiler = {
                 change.text,
                 new MonacoRange(change.range.startLineNumber, change.range.startColumn, change.range.endLineNumber, change.range.endColumn),
             );
+        } catch (e) {
+            err(e as TypstCoreError);
+        }
+    },
+    definition(path: string, range: Monaco.IRange, ok: (result: TypstCoreDefinition) => void, err: (error: TypstCoreError) => void) {
+        try {
+            const def = core.definition(path, new MonacoRange(range.startLineNumber, range.startColumn, range.endLineNumber, range.endColumn));
+            ok(def);
         } catch (e) {
             err(e as TypstCoreError);
         }

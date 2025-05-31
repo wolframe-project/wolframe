@@ -7,15 +7,21 @@ import monacoController from "..";
 import { TypstCompletionProvider } from "./provider/completionProvider";
 import { getVirtualFileSystem } from "../../stores/vfs.svelte";
 import { Path } from "../../path";
+import { TypstHoverProvider } from "./provider/hoverProvider";
+import { TypstDefinitionProvider } from "./provider/definitionProvider";
 
 export class TypstLanguage implements IMonacoLanguage {
 	private disposables: Monaco.IDisposable[] = [];
 	private monaco?: typeof Monaco;
 	private completionProvider: TypstCompletionProvider;
+	private hoverProvider: TypstHoverProvider;
+	private definitionProvider: TypstDefinitionProvider;
 	private vfs;
 
 	constructor() {
 		this.completionProvider = new TypstCompletionProvider();
+		this.hoverProvider = new TypstHoverProvider();
+		this.definitionProvider = new TypstDefinitionProvider();
 		this.vfs = getVirtualFileSystem();
 	}
 
@@ -61,6 +67,8 @@ export class TypstLanguage implements IMonacoLanguage {
 		this.disposables.push(
 			disposer,
 			monaco.languages.registerCompletionItemProvider('typst', this.completionProvider),
+			monaco.languages.registerHoverProvider('typst', this.hoverProvider),
+			monaco.languages.registerDefinitionProvider('typst', this.definitionProvider),
 		);
 	}
 

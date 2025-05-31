@@ -1,7 +1,7 @@
 import type { TreeNode } from "../stores/vfs/TreeNode.svelte";
 import type { Monaco } from "../monaco";
 import { debug } from "../utils";
-import type { Output, TypstCoreError } from "wolframe-typst-core";
+import type { Output, TypstCoreDefinition, TypstCoreError } from "wolframe-typst-core";
 
 type AppEvents = {
     "app:loaded": [], // Fired when the app is loaded
@@ -32,6 +32,7 @@ type AppEvents = {
     "command/monaco/editor:selection": [Monaco.IRange | {start: number, end: number}], // Fired when the editor selection should be changed
     
     "command/compiler:autocomplete": [string, Monaco.IRange, (result: unknown[]) => void]; // Fired when the compiler should retrieve the autocomplete suggestions
+    "command/compiler:definition": [string, Monaco.IRange, (result: TypstCoreDefinition) => void, (error: TypstCoreError) => void]; // Fired when the compiler should retrieve the definition for a given range
 }
 
 // One shot events that are fired once and never again

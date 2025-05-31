@@ -92,6 +92,18 @@ class MonacoController {
             theme.postInit?.(this.monaco, this.editor);
         }
 
+        this.monaco.editor.registerEditorOpener({
+            openCodeEditor: (source, resource, selectionOrPosition) => {
+                console.log("Opening file in Monaco editor", resource, selectionOrPosition);
+                eventController.fire("command/file:open", getIdFromUri(resource), (fileNode) => {
+                    if (this.monaco!.Range.isIRange(selectionOrPosition)) {
+                        this.editor!.setSelection(selectionOrPosition);
+                    }
+                });
+                return true;
+            }
+        })
+
         eventController.fire("monaco/editor:created");
     }
 

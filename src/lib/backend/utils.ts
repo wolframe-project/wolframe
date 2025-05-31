@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { writable } from "svelte/store";
 import type { Monaco } from "./monaco";
+import type { TypstCoreDefinition, TypstCoreDefinitionFn, TypstCoreDefinitionStd, TypstCoreDefinitionVar } from "wolframe-typst-core";
 
 export const debugLogStore = writable<{
     id: string;
@@ -56,4 +57,21 @@ export function getIdFromUri(uri: Monaco.Uri) {
         throw new Error("Model is not set yet.");
     }
     return id;
+}
+
+export namespace EnumTypeGuards {
+    export namespace TypstCoreDefinition {
+        export function isNone(def: TypstCoreDefinition): def is "None" {
+            return def === "None";
+        }
+        export function isStd(def: TypstCoreDefinition): def is { Std: TypstCoreDefinitionStd } {
+            return typeof def === "object" && "Std" in def;
+        }
+        export function isFn(def: TypstCoreDefinition): def is { Fn: TypstCoreDefinitionFn } {
+            return typeof def === "object" && "Fn" in def;
+        }
+        export function isVar(def: TypstCoreDefinition): def is { Var: TypstCoreDefinitionVar } {
+            return typeof def === "object" && "Var" in def;
+        }
+    }
 }

@@ -4,6 +4,7 @@ import * as Comlink  from 'comlink';
 import type { Renderer as RendererType } from '../worker/renderer/renderer';
 import type { Compiler as CompilerType } from '../worker/compiler/compiler';
 import type { Monaco } from "../monaco";
+import type { TypstCoreDefinition, TypstCoreError } from "wolframe-typst-core";
 
 /**
  * EditorManager is a class that manages the loading state of an editor in a Svelte application.
@@ -50,6 +51,7 @@ class EditorManager {
             eventController.register("file:opened", this.openFile.bind(this)),
             eventController.register("file:closed", this.closeFile.bind(this)),
             eventController.register("command/compiler:autocomplete", this.retrieveAutocomplete.bind(this)),
+            eventController.register("command/compiler:definition", this.retrieveDefinition.bind(this)),
         );
     }
 
@@ -157,6 +159,17 @@ class EditorManager {
         }
         this.Compiler.autocomplete(path, range, Comlink.proxy((result) => {
             callback(result);
+        }));
+    }
+
+    private retrieveDefinition(path: string, range: Monaco.IRange, ok: (result: TypstCoreDefinition) => void, err: (error: TypstCoreError) => void) {
+        if (!this.Compiler) {
+            throw new Error('Compiler not set');
+        }
+        this.Compiler.definition(path, range, Comlink.proxy((result) => {
+            ok(result);
+        }), Comlink.proxy((error) => {
+            err(error);
         }));
     }
 
