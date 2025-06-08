@@ -211,6 +211,7 @@
 		return () => {
 			disposables.forEach((d) => d.dispose());
 			editorManager.dispose();
+			monacoController.disposeEditor();
 		};
 	});
 </script>

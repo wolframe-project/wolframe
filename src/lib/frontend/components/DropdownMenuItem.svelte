@@ -1,5 +1,5 @@
 <script lang="ts">
-    let detailsElement: HTMLDetailsElement;
+	import Dropdown from "./Dropdown.svelte";
 
     let {
         name,
@@ -7,15 +7,11 @@
     } = $props();
 </script>
 
-<svelte:window onclick={() => {
-    if (detailsElement) {
-        detailsElement.open = false;
-    }
-}} />
-
-<details bind:this={detailsElement}>
+<Dropdown className="">
+    {#snippet body()}
     <summary class="after:hidden py-1">{name}</summary>
     <ul class="bg-base-100 mt-0! min-w-44 z-20 border border-base-300">
         {@render children()}
     </ul>
-</details>
+    {/snippet}
+</Dropdown>

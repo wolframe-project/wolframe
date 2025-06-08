@@ -12,6 +12,7 @@
 	import SelfComponent from "./PreviewPanel.svelte"
 	import { tick } from 'svelte';
 	import { getUiStore } from '@/lib/backend/stores/ui.svelte';
+	import Dropdown from '../Dropdown.svelte';
 
 	const MAX_ZOOM = 5;
 	const MIN_ZOOM = 0.25;
@@ -260,30 +261,32 @@
 	</typst-preview-page-container>
 {/snippet}
 <div class="grid min-h-0 max-h-screen" style="grid-template-rows: auto minmax(0, 1fr);" id="preview-anchor">
-	<div class="bg-base-200 flex items-center justify-between p-2">
+	<div class="bg-base-200 flex items-center justify-between p-1 border-base-100 border-t border-l">
 		<div class="join">
-			<button class="btn btn-sm btn-soft join-item" onclick={() => setZoom(zoom - 0.1)}
+			<button class="btn btn-xs btn-soft join-item" onclick={() => setZoom(zoom - 0.1)}
 				><Minus class="size-4" /></button
 			>
-			<details class="dropdown">
-				<summary class="btn btn-sm btn-soft join-item">{Math.trunc(zoom * 100)}%</summary>
-				<ul class="menu dropdown-content bg-base-100 rounded-box z-10 w-52 p-2 shadow-sm">
-					<li><button class="" onclick={() => zoomToFit('width')}>Fit width</button></li>
-					<li><button class="" onclick={() => zoomToFit('height')}>Fit height</button></li>
-					<div class="divider m-1"></div>
-					<li><button class="" onclick={() => setZoom(0.25)}>25%</button></li>
-					<li><button class="" onclick={() => setZoom(0.5)}>50%</button></li>
-					<li><button class="" onclick={() => setZoom(0.75)}>75%</button></li>
-					<li><button class="" onclick={() => setZoom(1)}>100%</button></li>
-					<li><button class="" onclick={() => setZoom(2)}>200%</button></li>
-					<li><button class="" onclick={() => setZoom(3)}>300%</button></li>
-				</ul>
-			</details>
-			<button class="btn btn-sm btn-soft join-item" onclick={() => setZoom(zoom + 0.1)}
+			<Dropdown className="dropdown -mt-0.5">
+				{#snippet body()}
+					<summary class="btn btn-xs btn-soft join-item">{Math.trunc(zoom * 100)}%</summary>
+					<ul class="menu dropdown-content bg-base-100 rounded-box z-10 w-52 p-2 shadow-sm">
+						<li><button class="" onclick={() => zoomToFit('width')}>Fit width</button></li>
+						<li><button class="" onclick={() => zoomToFit('height')}>Fit height</button></li>
+						<div class="divider m-1"></div>
+						<li><button class="" onclick={() => setZoom(0.25)}>25%</button></li>
+						<li><button class="" onclick={() => setZoom(0.5)}>50%</button></li>
+						<li><button class="" onclick={() => setZoom(0.75)}>75%</button></li>
+						<li><button class="" onclick={() => setZoom(1)}>100%</button></li>
+						<li><button class="" onclick={() => setZoom(2)}>200%</button></li>
+						<li><button class="" onclick={() => setZoom(3)}>300%</button></li>
+					</ul>
+				{/snippet}
+			</Dropdown>
+			<button class="btn btn-xs btn-soft join-item" onclick={() => setZoom(zoom + 0.1)}
 				><Plus class="size-4" /></button
 			>
 		</div>
-		{#if !inPopup}<button class="btn btn-sm btn-soft" onclick={transferToNewWindow}>Popout</button>{/if}
+		{#if !inPopup}<button class="btn btn-xs btn-soft" onclick={transferToNewWindow}>Popout</button>{/if}
 	</div>
 	<typst-preview-scroll-container
 		class="flex justify-center-safe overflow-auto p-[var(--outset)]"
