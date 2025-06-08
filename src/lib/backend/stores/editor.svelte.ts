@@ -18,6 +18,7 @@ class EditorManager {
     });
 
     private openFileId: string = $state('');
+    private openFiles: {id: string, tmp: boolean}[] = $state([]);
     private lastOpenedFiles: string[] = [];
 
     private _previewFilePath: string | null = $state(null);
@@ -81,6 +82,10 @@ class EditorManager {
     private openFile(id: string) {
         this.openFileId = id;
         this.lastOpenedFiles = [id, ...this.lastOpenedFiles.filter((file) => file !== id)];
+        if (this.openFiles.find((f) => f.id === id)) {
+			return;
+		}
+		this.openFiles.push({id, tmp: false});
     }
 
     private closeFile(id: string) {
@@ -90,16 +95,24 @@ class EditorManager {
             if (this.lastOpenedFiles.length === 0) {
                 eventController.fire("command/file:open", null);
                 this.openFileId = '';
-                return;
+            } else {
+                eventController.fire("command/file:open", this.lastOpenedFiles[0]);
+                this.openFileId = this.lastOpenedFiles[0];
             }
-            eventController.fire("command/file:open", this.lastOpenedFiles[0]);
-            this.openFileId = this.lastOpenedFiles[0];
-            return;
+        }
+
+        const index = this.openFiles.findIndex((f) => f.id === id);
+        if (index !== -1) {
+            this.openFiles.splice(index, 1);
         }
     }
 
     getOpenFileId() {
         return this.openFileId;
+    }
+
+    getOpenFiles() {
+        return this.openFiles;
     }
 
     /**

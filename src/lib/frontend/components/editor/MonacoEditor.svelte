@@ -14,11 +14,21 @@
 	const vfs = getVirtualFileSystem();
 	const editor = getEditorManager();
 
-	const currentlyOpenedFiles: TreeNode[] = $state([])
+	const currentlyOpenedFiles = $derived.by(() => {
+		debug('info', 'monaco/editor', 'Getting currently opened files');
+		return editor.getOpenFiles().map((file) => {
+			const vfsFile = vfs.getFileById(file.id);
+			if (vfsFile.ok) {
+				return vfsFile.unwrap();
+			}
+			return null;
+		}).filter((file): file is TreeNode => file !== null);
+	});
 
     // let filteredFiles = $derived();
 
 	function onMonacoLoaded() {
+
 		monacoController.createEditor(editorContainer);
 
 		document.fonts.ready.then(() => {
@@ -31,56 +41,19 @@
 		monacoController.changeSelection(range);
 	}
 
-	function onFileOpened(id: string) {
-		const fileResult = vfs.getFileById(id);
-		if (!fileResult.ok) {
-			debug('error', 'monaco/editor', 'File not found');
-			return;
-		}
-		const file = fileResult.unwrap();
-		if (currentlyOpenedFiles.find((f) => f.file.id === file.file.id)) {
-			return;
-		}
-		currentlyOpenedFiles.push(file);
-	}
-
-	function onFileClosed(id: string) {
-		const fileResult = vfs.getFileById(id);
-		if (!fileResult.ok) {
-			debug('error', 'monaco/editor', 'File not found');
-			return;
-		}
-		const file = fileResult.unwrap();
-		const index = currentlyOpenedFiles.findIndex((f) => f.file.id === file.file.id);
-		if (index !== -1) {
-			currentlyOpenedFiles.splice(index, 1);
-		}
-	}
-
 	$effect(() => {
 		let disposables = [];
 
 		disposables.push(
-			eventController.register('monaco:loaded', onMonacoLoaded),
+			eventController.register('monaco/editor:create', onMonacoLoaded),
 			eventController.register('command/monaco/editor:selection', onChangeSelection),
-			eventController.register('file:opened', onFileOpened),
-			eventController.register('file:closed', onFileClosed),
 		);
-
-		const typstTheme = new TypstTheme();
-		const typstLanguage = new TypstLanguage();
-
-		if (!monacoController.isMonacoLoaded()) {
-			monacoController.initMonaco();
-			monacoController.addTheme(typstTheme);
-			monacoController.addLanguage(typstLanguage);
-		}
 
 		return () => {
 			disposables.forEach((disposable) => {
 				disposable.dispose();
 			});
-			monacoController.dispose();
+			monacoController.disposeEditor();
 		};
 	});
 </script>

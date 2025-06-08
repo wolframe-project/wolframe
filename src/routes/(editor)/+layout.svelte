@@ -142,11 +142,24 @@
 		};
 
 		disposables.push(
-			eventController.register('monaco:loaded', () => vfs.loadFromBackend()),
+			eventController.register('monaco:loaded', () => {
+				vfs.loadFromBackend();
+				eventController.fire('monaco/editor:create')
+			}),
 			eventController.register('command/ui/console:visibility', consoleVisibility),
 			eventController.register('compiler/compile:error', addCompileError),
 			eventController.register('renderer:render', clearCompileError)
 		);
+
+
+
+		const typstTheme = new TypstTheme();
+		const typstLanguage = new TypstLanguage();
+
+		monacoController.initMonaco();
+		monacoController.addTheme(typstTheme);
+		monacoController.addLanguage(typstLanguage);
+
 		const Compiler = Comlink.wrap<CompilerType>(new CompilerWorker());
 
 		(async () => {
@@ -214,7 +227,7 @@
 {/await}
 
 {#snippet file_explorer()}
-	<div class="bg-base-200 flex flex-col">
+	<div class="bg-base-200 flex flex-col" style="grid-area: {uiStore.fileExplorerSide == 'left' ? 'a' : 'b'};">
 		<FileExplorer />
 	</div>
 {/snippet}
@@ -274,8 +287,8 @@
 		min={uiStore.fileExplorerSide === "left" ? "220px" : "60%"}
 		max={uiStore.fileExplorerSide === "left" ? "60%" : "-220px"}
 		class="hover:after:bg-primary!"
-		a={uiStore.fileExplorerSide === "left" ? file_explorer : editor_view}
-		b={uiStore.fileExplorerSide === "right" ? file_explorer : editor_view}
+		a={file_explorer}
+		b={editor_view}
 	/>
 </div>
 

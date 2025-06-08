@@ -10,6 +10,9 @@ class MonacoController {
     private editor?: Monaco.editor.IStandaloneCodeEditor;
     private languages: Set<IMonacoLanguage> = new Set();
     private themes: Set<IMonacoTheme> = new Set();
+    private editorBackup?: {
+
+    } = undefined;
 
     constructor() {}
 

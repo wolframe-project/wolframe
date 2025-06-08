@@ -7,6 +7,7 @@ type AppEvents = {
     "app:loaded": [], // Fired when the app is loaded
     
     "monaco:loaded": [], // Fired when Monaco is loaded
+    'monaco/editor:create': [],
     "monaco/editor:created": [], // Fired when the Monaco editor is created
 
     "files:loaded": [], // Fired when the files are loaded

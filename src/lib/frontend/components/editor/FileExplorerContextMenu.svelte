@@ -7,6 +7,7 @@
 	import { Check } from "lucide-svelte";
 	import { getEditorManager } from "@/lib/backend/stores/editor.svelte";
 	import { getUiStore } from "@/lib/backend/stores/ui.svelte";
+	import eventController from "@/lib/backend/events";
 
     const ctxMenuStore = getContextMenuStore();
 
@@ -92,6 +93,7 @@
 		{@render divider()}
 		{@render menuentry(false, `Move FileExplorer to the ${uiStore.fileExplorerSide === 'left' ? 'right' : 'left'}`, () => {
 			uiStore.fileExplorerSide = uiStore.fileExplorerSide === 'left' ? 'right' : 'left';
+			eventController.fire('monaco/editor:create');
 		})}
 	</ul>
 {/if}
