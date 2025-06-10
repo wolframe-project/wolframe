@@ -11,6 +11,11 @@
     const vfs = getVirtualFileSystem();
     let showConsole = $state(true);
 	let themeEditorWindow = new ComponentWindow();
+    let newFileObj = $state({
+        open: false,
+        location: "root",
+        file: ""
+    });
 
     $effect(() => {
         return () => {
@@ -26,7 +31,7 @@
 <ul class="menu menu-horizontal bg-base-200 h-12 w-full gap-2 p-2">
     <li>
         <DropdownMenuItem name="File">
-            <li><a href="/">New File</a></li>
+            <li><button onclick={() => newFileObj.open = true}>New File</button></li>
             <li><a href="/">Open File</a></li>
             <li><a href="/">Save</a></li>
             <li><a href="/">Save As</a></li>
@@ -75,27 +80,39 @@
     </li>
 </ul>
 
-<Dialog open={true}>
+<Dialog bind:open={newFileObj.open}>
     <h3 class="font-bold text-lg">New File</h3>
     <div class="py-4">
         <p>Select a location for a new file <span class="italic underline">or</span> provide a valid path.</p>
         <fieldset class="fieldset">
             <legend class="fieldset-legend">Location</legend>
-            <select class="select">
+            <select class="select" bind:value={newFileObj.location}>
+                <option value="root" selected>/</option>
                 {#each vfs.getFiles().filter(file => file.file.type === FileType.Folder) as dir}
-                    <option value={dir.path}>{dir.file.name}</option>
+                    <option value={dir.file.id}>{dir.path.rooted()}</option>
                 {/each}
             </select>
         </fieldset>
         <fieldset class="fieldset">
-            <legend class="fieldset-legend">Fiel Path</legend>
-            <input type="text" class="input input-bordered w-full" />
+            <legend class="fieldset-legend">File</legend>
+            <input type="text" class="input input-bordered w-full" bind:value={newFileObj.file} />
         </fieldset>
     </div>
     <div class="modal-action">
         <button class="btn btn-primary" onclick={() => {
-            // Logic to create a new file
+            if (newFileObj.file.trim() === "") {
+                alert("Please provide a valid file name.");
+                return;
+            }
+            vfs.addFile(newFileObj.file, "", newFileObj.location);
+            newFileObj.open = false;
+            newFileObj.file = "";
+            newFileObj.location = "root";
         }}>Create</button>
-        <button class="btn" onclick={() => {}}>Cancel</button>
+        <button class="btn" onclick={() => {
+            newFileObj.open = false;
+            newFileObj.file = "";
+            newFileObj.location = "root";
+        }}>Cancel</button>
     </div>
 </Dialog>
