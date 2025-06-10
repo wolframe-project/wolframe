@@ -1,6 +1,6 @@
 import type { IMonacoTheme } from '@/app.types';
 import type { Monaco } from '..';
-import typstTheme from '$lib/assets/monaco/themes/typst/tokyo-night.json';
+import typstTheme from '$lib/assets/monaco/themes/typst/WolframeDark.json';
 
 export class TypstTheme implements IMonacoTheme {
 	private disposables: Monaco.IDisposable[] = [];
@@ -35,24 +35,60 @@ export class TypstTheme implements IMonacoTheme {
 	 *   converted into Monaco Editor token theme rules.
 	 */
 	private parseVscodeTheme(): Monaco.editor.IStandaloneThemeData {
-		const colors = typstTheme.settings[0].settings;
-
-		const tokenColors: Monaco.editor.ITokenThemeRule[] = [];
-
-		for (let i = 1; i < typstTheme.settings.length; i++) {
-			const rule = typstTheme.settings[i];
-			const scope = rule.scope ?? '';
-			const settings = rule.settings;
-
-			for (const token of scope.split(',')) {
-				tokenColors.push({
-					token: token,
-					foreground: settings.foreground,
-					background: settings.background,
-					fontStyle: settings.fontStyle
-				});
+		function settingsColor(theme: any): Monaco.editor.IStandaloneThemeData['colors'] {
+			if ('settings' in theme && Array.isArray(theme.settings) && theme.settings.length > 0) {
+				let colors = theme.settings[0].settings;
+				return {
+					'editor.background': colors.background!,
+					'editor.foreground': colors.foreground!,
+					'menu.background': colors.background!,
+					'editor.lineHighlightBackground': colors.lineHighlight!,
+					'editor.selectionBackground': colors.selection!,
+					'editorCursor.foreground': colors.caret!
+				}
+			} else {
+				return theme.colors;
 			}
 		}
+
+		const colors = settingsColor(typstTheme);
+
+		function parseScopes(theme: any): Monaco.editor.ITokenThemeRule[] {
+			const tokenColors: Monaco.editor.ITokenThemeRule[] = [];
+			if ('settings' in theme && Array.isArray(theme.settings)) {
+				for (let i = 1; i < theme.settings.length; i++) {
+					const rule = theme.settings[i];
+					const scope = rule.scope ?? '';
+					const settings = rule.settings;
+
+					for (const token of scope.split(',')) {
+						tokenColors.push({
+							token: token,
+							foreground: settings.foreground,
+							background: settings.background,
+							fontStyle: settings.fontStyle
+						});
+					}
+				}
+			} else {
+				for (const rule of theme.rules) {
+					tokenColors.push({
+						token: rule.token,
+						foreground: rule.foreground,
+						background: rule.background,
+						fontStyle: rule.fontStyle === '' ? undefined : rule.fontStyle
+					});
+				}
+			}
+			return tokenColors;
+		}
+
+		const tokenColors: Monaco.editor.ITokenThemeRule[] = parseScopes(typstTheme);
+
+		console.log('Typst Monaco Theme', {
+			colors,
+			tokenColors
+		});
 
 		return {
 			base: 'vs-dark',
@@ -72,14 +108,7 @@ export class TypstTheme implements IMonacoTheme {
                 });
                 ```
             */
-			colors: {
-				'editor.background': colors.background!,
-				'editor.foreground': colors.foreground!,
-                'menu.background': colors.background!,
-				'editor.lineHighlightBackground': colors.lineHighlight!,
-				'editor.selectionBackground': colors.selection!,
-				'editorCursor.foreground': colors.caret!
-			}
+			colors
 		};
 	}
 

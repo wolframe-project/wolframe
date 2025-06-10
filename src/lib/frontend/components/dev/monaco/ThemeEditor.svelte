@@ -8,8 +8,10 @@
 	} from '@/lib/backend/monaco/textmate/theme-converter';
 	import { createId } from '@paralleldrive/cuid2';
 	import { ChevronLeft, Plus } from 'lucide-svelte';
-	import ColorPicker from 'svelte-awesome-color-picker';
+	import ColorPicker, { A11yVariant } from 'svelte-awesome-color-picker';
 	import TagInput from '../../TagInput.svelte';
+	import ColorSelect from '../../ColorSelect.svelte';
+	import Dialog from '../../Dialog.svelte';
 
 	const grammars: { [key: string]: string } = {
 		typst:
@@ -42,6 +44,29 @@
 	let curRule = $derived.by(() => {
 		return curTheme.tokenColors!.find((r) => r.id == curRuleId);
 	});
+	let usedColorsRanking: string[] = $derived.by(() => {
+		let allColors: {
+			[key: string]: number;
+		} = {};
+		curTheme.tokenColors!.forEach((token) => {
+			if (token.settings.foreground) {
+				allColors[token.settings.foreground] = (allColors[token.settings.foreground] || 0) + 1;
+			}
+			if (token.settings.background) {
+				allColors[token.settings.background] = (allColors[token.settings.background] || 0) + 1;
+			}
+		});
+		if (curTheme.colors) {
+			Object.entries(curTheme.colors).forEach(([color, value]) => {
+				allColors[value] = (allColors[value] || 0) + 1;
+			});
+		}
+		return Object.keys(allColors).sort((a, b) => allColors[b] - allColors[a]);
+	})
+	let importDialogOpen = $state(false);
+	let importFile: File | null = $state(null);
+	let newThemeDialogOpen = $state(false);
+	let newThemeName = $state('');
 
 	let { window: newWindow } = $props();
 
@@ -71,7 +96,7 @@
 
 	const DB_NAME = 'themeEditorDB';
 	const STORE_NAME = 'themes';
-	const THEME_KEY = 'currentTheme';
+	let themes = $state<string[]>([]);
 
 	let db: IDBDatabase | null = null;
 
@@ -99,7 +124,7 @@
 		if (db) {
 			const transaction = db.transaction([STORE_NAME], 'readwrite');
 			const store = transaction.objectStore(STORE_NAME);
-			store.put(theme, THEME_KEY);
+			store.put(theme, theme.name);
 			return new Promise<void>((resolve, reject) => {
 				transaction.oncomplete = () => resolve();
 				transaction.onerror = () => reject('Error saving theme');
@@ -107,7 +132,7 @@
 		}
 	}
 
-	async function loadThemeFromDB() {
+	async function loadThemeFromDB(themeName: string) {
 		if (!db) {
 			await initDB();
 		}
@@ -115,7 +140,7 @@
 			return new Promise<IVScodeTheme | undefined>((resolve, reject) => {
 				const transaction = db!.transaction([STORE_NAME], 'readonly');
 				const store = transaction.objectStore(STORE_NAME);
-				const request = store.get(THEME_KEY);
+				const request = store.get(themeName);
 				request.onerror = () => reject('Error loading theme');
 				request.onsuccess = () => {
 					if (request.result) {
@@ -138,9 +163,42 @@
 		return undefined;
 	}
 
+	async function loadThemesFromDB() {
+		if (!db) {
+			await initDB();
+		}
+		if (db) {
+			return new Promise<string[]>((resolve, reject) => {
+				const transaction = db!.transaction([STORE_NAME], 'readonly');
+				const store = transaction.objectStore(STORE_NAME);
+				const request = store.getAllKeys();
+				request.onerror = () => reject('Error loading themes');
+				request.onsuccess = () => {
+					themes = request.result as string[];
+					resolve(themes);
+				};
+			});
+		}
+		return [];
+	}
+
 	$effect(() => {
+		loadThemesFromDB().then((loadedThemes) => {
+			if (loadedThemes.length === 0) {
+				// If no themes are loaded, create a default theme
+				curTheme = {
+					$schema: 'vscode://schemas/color-theme',
+					type: 'dark',
+					tokenColors: [],
+					colors: {},
+					name: 'Default Theme',
+					include: ''
+				};
+			} else {
+				loadThemeFromDB(loadedThemes[0])
+			}
+		})
 		// Initialize DB and load theme when component mounts
-		loadThemeFromDB();
 		return () => {
 			console.log('cleanup');
 			// Cleanup: close the DB connection when the component is destroyed
@@ -232,6 +290,19 @@
 	function removeRule(rule: ITokenColor) {
 		curTheme.tokenColors = curTheme.tokenColors!.filter((r) => r.id != rule.id);
 		if (curView == 'token') curView = 'tokens';
+	}
+
+	function exportTheme() {
+		const theme = convertTheme($state.snapshot(curTheme));
+		const blob = new Blob([JSON.stringify(theme, null, 2)], { type: 'application/json' });
+		const url = URL.createObjectURL(blob);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${curTheme.name || 'theme'}.json`;
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
 	}
 </script>
 
@@ -339,19 +410,41 @@
             <div class="grid grid-cols-3 gap-4">
 			<div class="fieldset">
 				<legend class="fieldset-legend">Foreground</legend>
-				<ColorPicker
-					hex={curRule!.settings.foreground}
-					name="foreground"
-					onInput={(color) => (curRule!.settings.foreground = color.hex ?? undefined)}
-				/>
+				<div>
+					<ColorPicker
+						components={A11yVariant as any}
+						hex={curRule!.settings.foreground}
+						name="foreground"
+						isAlpha
+						onInput={(color) => (curRule!.settings.foreground = color.hex ?? undefined)}
+						a11yColors={[
+							{ bgHex: curTheme.colors?.['editor.background'] ?? '#FFF', placeholder: 'let' }
+						]}
+						nullable
+					/>
+					<ColorSelect colorList={usedColorsRanking} onColorSelect={(color) => {
+						curRule!.settings.foreground = color;
+					}} />
+				</div>
 			</div>
 			<div class="fieldset">
 				<legend class="fieldset-legend">Background</legend>
-				<ColorPicker
-					hex={curRule!.settings.background}
-					name="background"
-					onInput={(color) => (curRule!.settings.background = color.hex ?? undefined)}
-				/>
+				<div>
+					<ColorPicker
+						components={A11yVariant as any}
+						hex={curRule!.settings.background}
+						name="background"
+						isAlpha
+						onInput={(color) => (curRule!.settings.background = color.hex ?? undefined)}
+						a11yColors={[
+							{ bgHex: curTheme.colors?.['editor.background'] ?? '#FFF', placeholder: 'let' }
+						]}
+						nullable
+					/>
+					<ColorSelect colorList={usedColorsRanking} onColorSelect={(color) => {
+						curRule!.settings.background = color;
+					}} />
+				</div>
 			</div>
 			<div class="fieldset">
 				<legend class="fieldset-legend">Font Style</legend>
@@ -372,7 +465,11 @@
 			<p class="mb-4 text-2xl">Scopes</p>
             <div class="grid grid-cols-1 gap-2">
                 {#each curRule!.scope as scope, i}
-                    <TagInput bind:value={curRule!.scope[i]} useCompletions={true} completions={indexedGrammarScopes} />
+                    <TagInput bind:value={curRule!.scope[i]} useCompletions={true} completions={indexedGrammarScopes} onBlur={() => {
+						if (curRule!.scope[i] == "") {
+							curRule!.scope.splice(i, 1);
+						}
+					}} />
                 {/each}
                 <button class="btn btn-primary max-w-xs" onclick={(e) => {
                     curRule!.scope.push("");
@@ -387,7 +484,7 @@
 	{#await loadGrammar()}
 		<p>Loading grammar</p>
 	{:then g}
-		<div class="flex justify-between p-2">
+		<div class="grid grid-cols-3 items-center gap-2 p-2">
 			<div class="flex items-center gap-2">
 				{#if curView != 'none'}<button class="btn btn-square btn-sm btn-primary" onclick={lastView}
 						><ChevronLeft /></button
@@ -402,11 +499,36 @@
 						>
 					</div>
 				{/if}
+				{#if curView == 'none'}
+					<button class="btn btn-sm btn-primary" onclick={() => importDialogOpen = true}>
+						Import Theme
+					</button>
+					<button class="btn btn-sm btn-primary" onclick={exportTheme}>
+						Export Theme
+					</button>
+					<details class="dropdown">
+						<summary class="btn btn-sm btn-primary">Select Theme</summary>
+						<ul class="menu dropdown-content bg-base-200 rounded-box z-1 w-52 p-2 shadow-sm max-h-64 overflow-y-auto flex-nowrap">
+							<li><button class="w-full text-left" onclick={() => newThemeDialogOpen = true}>New Theme</button></li>
+							{#each themes as theme}
+								<li>
+									<button
+										class="w-full text-left"
+										onclick={() => {
+											loadThemeFromDB(theme).then(() => {
+												curView = 'none';
+											});
+										}}>{theme}</button>
+								</li>
+							{/each}
+						</ul>
+					</details>
+				{/if}
 			</div>
 			<div>
-				<p class="text-xl font-semibold">{curViewToTitle()}</p>
+				<p class="text-xl font-semibold text-center">{curViewToTitle()} - {curTheme.name}</p>
 			</div>
-			<div>
+			<div class="justify-self-end">
 				{@render theme_actions()}
 			</div>
 		</div>
@@ -415,3 +537,58 @@
 		</div>
 	{/await}
 </div>
+
+<Dialog bind:open={importDialogOpen}>
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">Pick a file</legend>
+		<input type="file" class="file-input" accept="application/json" bind:value={importFile} />
+	</fieldset>
+	<div class="flex justify-end gap-2">
+		<button class="btn btn-primary" onclick={() => {
+			if (importFile) {
+				const reader = new FileReader();
+				reader.onload = async (e) => {
+					try {
+						const content = e.target?.result as string;
+						const theme = JSON.parse(content) as IVScodeTheme;
+						if (theme.$schema === 'vscode://schemas/color-theme') {
+							curTheme = theme as ICVScodeTheme;
+							themes.push(curTheme.name!);
+							importDialogOpen = false;
+							curView = 'none';
+						} else {
+							alert('Invalid theme file');
+						}
+					} catch (error) {
+						alert('Error reading theme file: ' + error);
+					}
+				};
+				reader.readAsText(importFile);
+			}
+		}}>Import Theme</button>
+		<button class="btn" onclick={() => importDialogOpen = false}>Cancel</button>
+</Dialog>
+
+<Dialog bind:open={newThemeDialogOpen}>
+	<fieldset class="fieldset">
+		<legend class="fieldset-legend">New Theme</legend>
+		<input type="text" class="input border" placeholder="Theme Name" bind:value={newThemeName} />
+	</fieldset>
+	<div class="flex justify-end gap-2">
+		<button class="btn btn-primary" onclick={() => {
+			newThemeDialogOpen = false;
+			curView = 'none';
+			let newTheme = {
+				$schema: 'vscode://schemas/color-theme',
+				type: 'dark',
+				tokenColors: [],
+				colors: {},
+				name: newThemeName,
+				include: ''
+			} as ICVScodeTheme;
+			curTheme = newTheme;
+			themes.push(newThemeName);
+		}}>Create Theme</button>
+		<button class="btn" onclick={() => newThemeDialogOpen = false}>Cancel</button>
+	</div>
+</Dialog>

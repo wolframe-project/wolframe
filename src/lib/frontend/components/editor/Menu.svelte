@@ -3,6 +3,7 @@
 	import { getUiStore } from "@/lib/backend/stores/ui.svelte";
 	import { ComponentWindow } from "../../utils/ComponentWindow";
 	import ThemeEditor from "../dev/monaco/ThemeEditor.svelte";
+	import Dialog from "../Dialog.svelte";
 
     const uiStore = getUiStore();
     let showConsole = $state(true);
@@ -70,3 +71,7 @@
         </DropdownMenuItem>
     </li>
 </ul>
+
+<Dialog open={true}>
+    <h3 class="font-bold text-lg">New File</h3>
+</Dialog>

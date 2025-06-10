@@ -8,10 +8,12 @@ import type { ChangeEvent } from "sveltekit-superforms";
         value = $bindable(),
         completions = [],
         useCompletions = false,
+        onBlur
     }: {
         value?: string;
         completions?: string[];
         useCompletions?: boolean;
+        onBlur?: () => void;
     } = $props();
 
     let isCompletionsOpen = $state(false);
@@ -55,6 +57,7 @@ import type { ChangeEvent } from "sveltekit-superforms";
 
     function closeCompletions() {
         isCompletionsOpen = false;
+        onBlur?.();
     }
 
     function filterAutocomplete() {
@@ -139,6 +142,7 @@ import type { ChangeEvent } from "sveltekit-superforms";
                 bind:this={input}
                 bind:value={inputValue}
                 onkeydown={onInput}
+                onfocus={openCompletions}
                 onblur={closeCompletions}
             />
         </div>

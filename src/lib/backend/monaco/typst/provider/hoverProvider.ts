@@ -29,7 +29,7 @@ export class TypstHoverProvider implements Monaco.languages.HoverProvider {
 					fileNode.path.rooted(),
 					range,
 					(result) => {
-                        console.log('Hover definition result:', result);
+                        console.log('Hover definition result:', result.name);
 						if (EnumTypeGuards.TypstCoreDefinition.isStd(result)) {
 							const stdDef = result.Std;
 							resolve({
