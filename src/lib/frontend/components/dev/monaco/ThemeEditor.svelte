@@ -12,6 +12,7 @@
 	import TagInput from '../../TagInput.svelte';
 	import ColorSelect from '../../ColorSelect.svelte';
 	import Dialog from '../../Dialog.svelte';
+	import Dropdown from '../../Dropdown.svelte';
 
 	const grammars: { [key: string]: string } = {
 		typst:
@@ -506,7 +507,7 @@
 					<button class="btn btn-sm btn-primary" onclick={exportTheme}>
 						Export Theme
 					</button>
-					<details class="dropdown">
+					<Dropdown className="dropdown">
 						<summary class="btn btn-sm btn-primary">Select Theme</summary>
 						<ul class="menu dropdown-content bg-base-200 rounded-box z-1 w-52 p-2 shadow-sm max-h-64 overflow-y-auto flex-nowrap">
 							<li><button class="w-full text-left" onclick={() => newThemeDialogOpen = true}>New Theme</button></li>
@@ -522,7 +523,7 @@
 								</li>
 							{/each}
 						</ul>
-					</details>
+					</Dropdown>
 				{/if}
 			</div>
 			<div>
@@ -543,8 +544,8 @@
 		<legend class="fieldset-legend">Pick a file</legend>
 		<input type="file" class="file-input" accept="application/json" bind:value={importFile} />
 	</fieldset>
-	<div class="flex justify-end gap-2">
-		<button class="btn btn-primary" onclick={() => {
+	<div class="modal-action">
+		<button class="btn btn-sm btn-primary" onclick={() => {
 			if (importFile) {
 				const reader = new FileReader();
 				reader.onload = async (e) => {
@@ -566,7 +567,7 @@
 				reader.readAsText(importFile);
 			}
 		}}>Import Theme</button>
-		<button class="btn" onclick={() => importDialogOpen = false}>Cancel</button>
+		<button class="btn btn-sm" onclick={() => importDialogOpen = false}>Cancel</button>
 </Dialog>
 
 <Dialog bind:open={newThemeDialogOpen}>
@@ -574,8 +575,8 @@
 		<legend class="fieldset-legend">New Theme</legend>
 		<input type="text" class="input border" placeholder="Theme Name" bind:value={newThemeName} />
 	</fieldset>
-	<div class="flex justify-end gap-2">
-		<button class="btn btn-primary" onclick={() => {
+	<div class="modal-action">
+		<button class="btn btn-sm btn-primary" onclick={() => {
 			newThemeDialogOpen = false;
 			curView = 'none';
 			let newTheme = {
@@ -589,6 +590,6 @@
 			curTheme = newTheme;
 			themes.push(newThemeName);
 		}}>Create Theme</button>
-		<button class="btn" onclick={() => newThemeDialogOpen = false}>Cancel</button>
+		<button class="btn btn-sm" onclick={() => newThemeDialogOpen = false}>Cancel</button>
 	</div>
 </Dialog>

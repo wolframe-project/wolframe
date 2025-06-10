@@ -2,8 +2,8 @@
     let detailsElement: HTMLDetailsElement;
 
     let {
-        body,
-        className
+        className = "",
+        children
     } = $props();
 </script>
 
@@ -18,5 +18,5 @@
 }} />
 
 <details bind:this={detailsElement} class={className}>
-    {@render body()}
+    {@render children()}
 </details>

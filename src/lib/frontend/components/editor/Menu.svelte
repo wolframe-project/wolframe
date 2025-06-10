@@ -4,8 +4,11 @@
 	import { ComponentWindow } from "../../utils/ComponentWindow";
 	import ThemeEditor from "../dev/monaco/ThemeEditor.svelte";
 	import Dialog from "../Dialog.svelte";
+	import { getVirtualFileSystem } from "@/lib/backend/stores/vfs.svelte";
+	import { FileType } from "@/app.types";
 
     const uiStore = getUiStore();
+    const vfs = getVirtualFileSystem();
     let showConsole = $state(true);
 	let themeEditorWindow = new ComponentWindow();
 
@@ -74,4 +77,25 @@
 
 <Dialog open={true}>
     <h3 class="font-bold text-lg">New File</h3>
+    <div class="py-4">
+        <p>Select a location for a new file <span class="italic underline">or</span> provide a valid path.</p>
+        <fieldset class="fieldset">
+            <legend class="fieldset-legend">Location</legend>
+            <select class="select">
+                {#each vfs.getFiles().filter(file => file.file.type === FileType.Folder) as dir}
+                    <option value={dir.path}>{dir.file.name}</option>
+                {/each}
+            </select>
+        </fieldset>
+        <fieldset class="fieldset">
+            <legend class="fieldset-legend">Fiel Path</legend>
+            <input type="text" class="input input-bordered w-full" />
+        </fieldset>
+    </div>
+    <div class="modal-action">
+        <button class="btn btn-primary" onclick={() => {
+            // Logic to create a new file
+        }}>Create</button>
+        <button class="btn" onclick={() => {}}>Cancel</button>
+    </div>
 </Dialog>

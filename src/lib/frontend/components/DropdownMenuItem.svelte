@@ -4,11 +4,9 @@
 	let { name, children } = $props();
 </script>
 
-<Dropdown className="">
-	{#snippet body()}
-		<summary class="py-1 after:hidden">{name}</summary>
-		<ul class="bg-base-100 border-base-300 z-20 mt-0! min-w-44 border">
-			{@render children()}
-		</ul>
-	{/snippet}
+<Dropdown className="dropdown">
+	<summary class="py-1 after:hidden">{name}</summary>
+	<ul class="bg-base-100 border-base-300 z-20 mt-0! min-w-44 border">
+		{@render children()}
+	</ul>
 </Dropdown>
