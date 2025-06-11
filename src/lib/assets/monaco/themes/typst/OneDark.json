@@ -1,0 +1,169 @@
+{
+  "base": "vs-dark",
+  "inherit": true,
+  "rules": [
+    {
+      "token": "meta.expr.let.typst storage.type",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.control.other",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.control.loop.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.control.conditional.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.other.range.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.operator.relational.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.operator.arithmetic.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "keyword.operator.spread.typst",
+      "foreground": "#f43098",
+      "fontStyle": ""
+    },
+    {
+      "token": "variable.other.readwrite.typst",
+      "foreground": "#a98aff",
+      "fontStyle": ""
+    },
+    {
+      "token": "entity.name.function.typst",
+      "foreground": "#00d3bb",
+      "fontStyle": ""
+    },
+    {
+      "token": "variable.other.readwrite.hash",
+      "foreground": "#ff33a0",
+      "fontStyle": "italic"
+    },
+    {
+      "token": "keyword.control.hash",
+      "foreground": "#ff33a0",
+      "fontStyle": "italic"
+    },
+    {
+      "token": "entity.name.function.hash",
+      "foreground": "#ff33a0",
+      "fontStyle": "italic"
+    },
+    {
+      "token": "entity.name.module.typst",
+      "foreground": "#e1f99f",
+      "fontStyle": ""
+    },
+    {
+      "token": "constant.language.boolean.typst",
+      "foreground": "#e8b268",
+      "fontStyle": ""
+    },
+    {
+      "token": "constant.numeric",
+      "foreground": "#e8b268",
+      "fontStyle": ""
+    },
+    {
+      "token": "string.quoted.double.typst",
+      "foreground": "#e8b268",
+      "fontStyle": ""
+    },
+    {
+      "token": "variable.other.constant.builtin.typst",
+      "foreground": "#e8b268",
+      "fontStyle": ""
+    },
+    {
+      "token": "comment.line.tidy",
+      "foreground": "#547d96",
+      "fontStyle": "bold"
+    },
+    {
+      "token": "comment.block.typst",
+      "foreground": "#6f7985",
+      "fontStyle": ""
+    },
+    {
+      "token": "comment.line.double-slash.typst",
+      "foreground": "#6f7985",
+      "fontStyle": ""
+    },
+    {
+      "token": "comment.line.shebang.typst",
+      "foreground": "#6f7985",
+      "fontStyle": ""
+    },
+    {
+      "token": "entity.name.type.custom.tidy.typst",
+      "foreground": "#a18b65",
+      "fontStyle": "bold italic"
+    },
+    {
+      "token": "comment.line.tidy.type-annotation.typst entity.name.type.primitive.typst",
+      "foreground": "#a18b65",
+      "fontStyle": "bold italic"
+    },
+    {
+      "token": "punctuation.definition.tidy.type-annotation",
+      "foreground": "#ae5197",
+      "fontStyle": "bold"
+    },
+    {
+      "token": "keyword.operator.separator.pipe.tidy.typst",
+      "foreground": "#ae5197",
+      "fontStyle": "bold"
+    },
+    {
+      "token": "markup.bold.typst",
+      "foreground": "#f2f2f2",
+      "fontStyle": "bold"
+    },
+    {
+      "token": "markup.heading.typst",
+      "foreground": "#ffffff",
+      "fontStyle": "bold underline"
+    },
+    {
+      "token": "markup.italic.typst",
+      "foreground": "#f2f2f2",
+      "fontStyle": "italic"
+    },
+    {
+      "token": "markup.italic.typst markup.bold.typst",
+      "foreground": "#f2f2f2",
+      "fontStyle": "bold italic"
+    },
+    {
+      "token": "markup.bold.typst markup.italic.typst",
+      "foreground": "#f2f2f2",
+      "fontStyle": "bold italic"
+    }
+  ],
+  "colors": {
+    "editor.background": "#2a3037",
+    "editor.foreground": "#f2f2f2",
+    "menu.background": "#2a3037",
+    "editor.lineHighlightBackground": "#272c33",
+    "editor.selectionBackground": "#00a8e640",
+    "editorCursor.foreground": "#ffffff"
+  }
+}

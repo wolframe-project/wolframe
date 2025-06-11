@@ -1,6 +1,6 @@
 import type { IMonacoTheme } from '@/app.types';
 import type { Monaco } from '..';
-import typstTheme from '$lib/assets/monaco/themes/typst/WolframeDark.json';
+import typstTheme from '$lib/assets/monaco/themes/typst/OneDark.json';
 
 export class TypstTheme implements IMonacoTheme {
 	private disposables: Monaco.IDisposable[] = [];
